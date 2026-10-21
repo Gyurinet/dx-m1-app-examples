@@ -6,7 +6,7 @@
 |---|---|---|
 | `detection/` | YOLO 검출 전처리(레터박스)·후처리(NMS) `yolo_common.py`, 동영상·카메라 비동기 검출 `detect_video.py`, 검출 화면을 PC 브라우저로 실시간 전송 `live_web.py` | 8.2절, 8.4절 |
 | `cpp/` | DX-RT C++ API로 이미지 1장을 분류하는 최소 예제(CMake) | 8.3절 |
-| `farm/` | CLIP으로 농장 대상(익은 귤, 돼지 등) 이름을 판정하는 `farm-clip.py`, 감귤 검출 설정 `conf50.json`, 예제 사진 `samples/`(출처 `samples/SOURCES.md`) | 8.3절, 9장 |
+| `farm/` | CLIP으로 농장 대상(익은 귤, 돼지 등) 이름을 판정하는 `farm-clip.py`, 감귤 검출 설정 `conf50.json`, 마릿수 세기용 검출 설정 `count.json`, 예제 사진 `samples/`(출처 `samples/SOURCES.md`) | 8.3절, 9장 |
 
 ## 준비
 
@@ -49,6 +49,11 @@ cd ~/sample/dx-clip-starter
 ~/sample/dx_app/bin/yolov11x_sync -m ~/workspace/res/models/yolo11-x_640x640.dxnn -i $S/sow-piglets.jpg --no-display --show-log > det.log
 .venv-clip/bin/python farm-clip.py --image $S/sow-piglets.jpg --det-log det.log --min-score 0.3 \
   --labels "돼지=a photo of a pig" "소=a photo of a cow" "양=a photo of a sheep" "개=a photo of a dog"
+
+# 돈방 마릿수 세기: 겹친 개체까지 잡는 검출 설정(count.json), 같은 개체 상자 정리(--dedupe), 셀 영역(--roi x1,y1,x2,y2)
+~/sample/dx_app/bin/yolov11x_sync -m ~/workspace/res/models/yolo11-x_640x640.dxnn -i $S/sow-piglets.jpg --no-display --show-log --config $F/count.json > det.log
+.venv-clip/bin/python farm-clip.py --image $S/sow-piglets.jpg --det-log det.log --min-score 0.15 --dedupe 0.9 --roi 0,150,1280,850 \
+  --labels "돼지=a photo of a pig" "소=a photo of a cow" "양=a photo of a sheep"
 
 # 감귤 개수 세기: dx_app의 YOLOv7 예제에 신뢰도 기준 0.5 설정을 적용
 cd ~/sample/dx_app

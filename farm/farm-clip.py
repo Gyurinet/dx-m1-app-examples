@@ -67,6 +67,17 @@ def encode_image(engine, rgb):
     return feat / np.linalg.norm(feat)
 
 
+def area(x1, y1, x2, y2):
+    return max(0.0, x2 - x1) * max(0.0, y2 - y1)
+
+
+def inside(a, b):
+    """상자 a 넓이 가운데 상자 b 안에 들어가는 비율"""
+    w = max(0.0, min(a[2], b[2]) - max(a[0], b[0]))
+    h = max(0.0, min(a[3], b[3]) - max(a[1], b[1]))
+    return w * h / max(1e-6, (a[2] - a[0]) * (a[3] - a[1]))
+
+
 def softmax(x, scale):
     z = np.exp((x - x.max()) * scale)
     return z / z.sum()
@@ -98,6 +109,8 @@ def main():
     ap.add_argument("--det-log", help="탐지 예제 --show-log 출력 파일. 주면 상자마다 판정")
     ap.add_argument("--min-score", type=float, default=0.5, help="--det-log 에서 사용할 탐지 신뢰도 하한")
     ap.add_argument("--out", help="결과 이미지 저장 경로")
+    ap.add_argument("--roi", help="셀 영역 x1,y1,x2,y2(픽셀). 상자 중심이 이 안에 있는 것만 센다")
+    ap.add_argument("--dedupe", type=float, default=0, help="같은 이름의 상자 안에 이 비율 이상 들어가고 넓이가 그 절반 이하인 상자는 같은 개체로 보고 세지 않는다(예: 0.9)")
     ap.add_argument("--image-encoder", default="dxnn/ViT-L-14-quickgelu-dfn2b.dxnn")
     ap.add_argument("--text-encoder", default="onnx/ViT-L-14-quickgelu-dfn2b-text.onnx")
     ap.add_argument("--model-name", default="ViT-L-14-quickgelu")
@@ -140,19 +153,37 @@ def main():
             draw.text((26, y + 1), f"{names[i]} {prob[i] * 100:.0f}%", font=fnt, fill=(255, 255, 255))
     else:
         boxes = [d for d in dets if d[1] >= a.min_score]
+        roi = [float(v) for v in a.roi.split(",")] if a.roi else None
         counts = {n: 0 for n in names}
-        print("box  det(class score)      ->  label (score)")
+        judged = []
         for k, (cls, sc, x1, y1, x2, y2) in enumerate(boxes, 1):
             mx, my = (x2 - x1) * 0.1, (y2 - y1) * 0.1   # 상자 둘레 10%를 함께 잘라 문맥을 준다
             crop = rgb[int(max(0, y1 - my)):int(min(H, y2 + my)), int(max(0, x1 - mx)):int(min(W, x2 + mx))]
             if crop.size == 0:
                 continue
             prob = softmax(text @ encode_image(engine, crop), a.scale)
-            i = int(prob.argmax()); counts[names[i]] += 1
-            print(f"{k:>3}  {cls:>8} {sc:.2f}  ->  {names[i]} ({prob[i]:.2f})")
+            judged.append((k, cls, sc, x1, y1, x2, y2, int(prob.argmax()), float(prob.max())))
+        if roi:
+            draw.rectangle(roi, outline=(255, 255, 255), width=max(2, W // 400))
+        notes, kept = {}, []                             # 큰 상자부터 보며 셀 상자를 고른다
+        for j in sorted(judged, key=lambda j: -(j[5] - j[3]) * (j[6] - j[4])):
+            k, x1, y1, x2, y2, i = j[0], *j[3:8]
+            if roi and not (roi[0] <= (x1 + x2) / 2 <= roi[2] and roi[1] <= (y1 + y2) / 2 <= roi[3]):
+                notes[k] = "영역 밖"
+            elif a.dedupe and any(q[7] == i and inside((x1, y1, x2, y2), q[3:7]) >= a.dedupe and area(x1, y1, x2, y2) <= 0.5 * area(*q[3:7]) for q in kept):
+                notes[k] = "겹침(같은 개체)"
+            else:
+                kept.append(j)
+        print("box  det(class score)      ->  label (score)")
+        for k, cls, sc, x1, y1, x2, y2, i, p in judged:
+            note = notes.get(k)
+            print(f"{k:>3}  {cls:>8} {sc:.2f}  ->  {names[i]} ({p:.2f})" + (f"  [{note}, 세지 않음]" if note else ""))
+            if note:
+                continue
+            counts[names[i]] += 1
             color = PALETTE[i % len(PALETTE)]
             draw.rectangle([x1, y1, x2, y2], outline=color, width=max(3, W // 300))
-            draw_label(draw, (x1, y1), f"{names[i]} {prob[i] * 100:.0f}%", color, fnt)
+            draw_label(draw, (x1, y1), f"{names[i]} {p * 100:.0f}%", color, fnt)
         summary = "  ".join(f"{n} {c}" for n, c in counts.items())
         print("count:", summary)
         l, t, r, b = draw.textbbox((0, 0), summary, font=fnt)

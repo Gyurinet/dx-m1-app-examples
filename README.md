@@ -4,9 +4,10 @@
 
 | 폴더 | 내용 | DX-M1 개발 입문서 |
 |---|---|---|
-| `detection/` | YOLO 검출 전처리(레터박스)·후처리(NMS) `yolo_common.py`, 동영상·카메라 비동기 검출 `detect_video.py`, 검출 화면을 PC 브라우저로 실시간 전송 `live_web.py` | 8.2절, 8.4절 |
-| `cpp/` | DX-RT C++ API로 이미지 1장을 분류하는 최소 예제(CMake) | 8.3절 |
-| `farm/` | CLIP으로 농장 대상(익은 귤, 돼지 등) 이름을 판정하는 `farm-clip.py`, 감귤 검출 설정 `conf50.json`, 마릿수 세기용 검출 설정 `count.json`, 예제 사진 `samples/`(출처 `samples/SOURCES.md`) | 8.3절, 9장 |
+| `detection/` | YOLO 검출 전처리(레터박스)·후처리(NMS) `yolo_common.py`, 동영상·카메라 비동기 검출 `detect_video.py`, 검출 화면을 작업용 PC의 브라우저로 실시간 전송 `live_web.py` | 2.9절, 7.2절, 8.2절, 8.3절 |
+| `python/` | `dx_engine`으로 이미지 1장을 분류하는 최소 예제 `classify.py` | 7.5절 |
+| `cpp/` | DX-RT C++ API로 이미지 1장을 분류하는 최소 예제(CMake) | 8.4절 |
+| `farm/` | CLIP으로 농장 대상(익은 귤, 돼지 등) 이름을 판정하는 `farm-clip.py`, 감귤 검출 설정 `conf50.json`, 마릿수 세기용 검출 설정 `count.json`, 예제 사진 `samples/`(출처 `samples/SOURCES.md`) | 6.2절, 9장 |
 
 ## 준비
 

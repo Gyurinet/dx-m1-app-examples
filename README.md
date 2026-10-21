@@ -13,7 +13,7 @@
 DX-RT(`libdxrt-bin`)와 `dx_app` 예제 환경이 설치되어 있어야 합니다(입문서 2장). Python 예제는 `dx_app`의 가상환경(`dx_engine`, OpenCV 포함)에서 실행합니다.
 
 ```sh
-git clone <이 저장소 주소> ~/dx-m1-app-examples
+git clone https://github.com/Gyurinet/dx-m1-app-examples.git ~/dx-m1-app-examples
 source ~/sample/dx_app/venv-dxnn/bin/activate
 ```
 

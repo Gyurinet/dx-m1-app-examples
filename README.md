@@ -29,6 +29,8 @@ python detect_video.py <모델>.dxnn <동영상> --frames 90 --save out.mp4
 M=~/workspace/res/models/yolo11-n_640x640.dxnn
 python live_web.py $M 0                 # USB 카메라
 python live_web.py $M <동영상 | rtsp://주소>
+# 옵션: --depth 2(지연 줄이기), --max-speed(동영상을 최대 속도로), --view-width 960(전송 화면 크기)
+# 화면 왼쪽 위에 NPU 계산 시간·처리 속도가, SSH 창에 5초마다 처리 속도·NPU 시간·지연이 나온다
 
 # C++ 분류 예제
 cd ~/dx-m1-app-examples/cpp
@@ -61,7 +63,7 @@ cd ~/sample/dx_app
 - DEEPX: DX-RT 3.4.2, `dx_engine` 3.4.2(Python 3.13), 펌웨어 v2.7.4, `dx_app` v3.2.2
 - 빌드: CMake 3.31.6, OpenCV(`dx_app` 설치 때 함께 설치)
 - 동영상 처리 속도는 동영상 파일로 측정했습니다. 카메라·RTSP 입력은 입력 장치에 따라 달라질 수 있습니다.
-- `live_web.py`는 USB 웹캠(1280×720, MJPG)과 1080p 동영상에서 30 FPS로 표시됨을 확인했습니다. RTSP 입력은 시험하지 않았습니다.
+- `live_web.py`(1080p 동영상, 브라우저 1개): `dx_app` 데모 모델 28.3 FPS·지연 124 ms, 입문서 5.4절로 변환한 `yolo11n_topk.dxnn`은 최대 49.0 FPS, depth 2에서 지연 38 ms. NPU 계산은 한 장에 약 5 ms이며, 같은 YOLO11n을 CPU(ONNX Runtime 4코어)로만 돌리면 141 ms였습니다. RTSP 입력은 시험하지 않았습니다.
 - `farm/samples/`의 사진으로 가이드 9장 그림의 판정 결과를 재현할 수 있습니다.
 
 ## 라이선스

@@ -4,7 +4,7 @@
 
 | 폴더 | 내용 | DX-M1 개발 입문서 |
 |---|---|---|
-| `detection/` | YOLO 검출 전처리(레터박스)·후처리(NMS) `yolo_common.py`, 동영상·카메라 비동기 검출 `detect_video.py` | 8.2절, 8.4절 |
+| `detection/` | YOLO 검출 전처리(레터박스)·후처리(NMS) `yolo_common.py`, 동영상·카메라 비동기 검출 `detect_video.py`, 검출 화면을 PC 브라우저로 실시간 전송 `live_web.py` | 8.2절, 8.4절 |
 | `cpp/` | DX-RT C++ API로 이미지 1장을 분류하는 최소 예제(CMake) | 8.3절 |
 | `farm/` | CLIP으로 농장 대상(익은 귤, 돼지 등) 이름을 판정하는 `farm-clip.py`, 감귤 검출 설정 `conf50.json`, 예제 사진 `samples/`(출처 `samples/SOURCES.md`) | 8.3절, 9장 |
 
@@ -24,6 +24,11 @@ source ~/sample/dx_app/venv-dxnn/bin/activate
 cd ~/dx-m1-app-examples/detection
 python detect_video.py <모델>.dxnn <동영상 | 카메라 번호 | rtsp://주소> --depth 4
 python detect_video.py <모델>.dxnn <동영상> --frames 90 --save out.mp4
+
+# 실시간 검출 화면: 실행 후 나오는 주소(http://<제어기 IP>:8080/)를 PC 브라우저로 연다
+M=~/workspace/res/models/yolo11-n_640x640.dxnn
+python live_web.py $M 0                 # USB 카메라
+python live_web.py $M <동영상 | rtsp://주소>
 
 # C++ 분류 예제
 cd ~/dx-m1-app-examples/cpp
@@ -48,7 +53,7 @@ cd ~/sample/dx_app
 ./bin/yolov7_sync -m assets/models/yolov7_640x640.dxnn -i $S/citrus-tree.jpg --no-display --save --show-log --config $F/conf50.json
 ```
 
-검출 예제는 출력이 `[1, 4 + 클래스 수, 후보 수]`인 YOLO(v8·11) 모델에 맞춰져 있습니다. `dx-m1-model-convert`로 변환한 `yolo11n.dxnn`, `yolo11n_topk.dxnn`으로 확인했습니다.
+검출 예제는 출력이 `[1, 4 + 클래스 수, 후보 수]`인 YOLO(v8·11) 모델에 맞춰져 있습니다. `dx-m1-model-convert`로 변환한 `yolo11n.dxnn`, `yolo11n_topk.dxnn`과 `dx_app` 데모 모델 `yolo11-n_640x640.dxnn`으로 확인했습니다.
 
 ## 확인한 환경
 
@@ -56,6 +61,7 @@ cd ~/sample/dx_app
 - DEEPX: DX-RT 3.4.2, `dx_engine` 3.4.2(Python 3.13), 펌웨어 v2.7.4, `dx_app` v3.2.2
 - 빌드: CMake 3.31.6, OpenCV(`dx_app` 설치 때 함께 설치)
 - 동영상 처리 속도는 동영상 파일로 측정했습니다. 카메라·RTSP 입력은 입력 장치에 따라 달라질 수 있습니다.
+- `live_web.py`는 USB 웹캠(1280×720, MJPG)과 1080p 동영상에서 30 FPS로 표시됨을 확인했습니다. RTSP 입력은 시험하지 않았습니다.
 - `farm/samples/`의 사진으로 가이드 9장 그림의 판정 결과를 재현할 수 있습니다.
 
 ## 라이선스

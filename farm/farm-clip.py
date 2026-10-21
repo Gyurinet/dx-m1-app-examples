@@ -105,6 +105,15 @@ def main():
     a = ap.parse_args()
 
     names, prompts = parse_labels(a.labels)
+    dets = []
+    if a.det_log:
+        # 탐지 결과가 없으면 0마리로 보고하지 않고 멈춘다(탐지 명령이 실행되지 않은 경우가 대부분)
+        for line in open(a.det_log, encoding="utf-8", errors="ignore"):
+            m = DET_LINE.match(re.sub(r"\x1b\[[0-9;]*m", "", line).strip())
+            if m:
+                dets.append((m.group(1), float(m.group(2)), *[float(v) for v in m.groups()[2:]]))
+        if not dets:
+            sys.exit(f"{a.det_log}에 [DET] 줄이 없습니다. 탐지 명령이 --show-log로 실행되어 이 파일에 출력했는지 확인하세요.")
     text = encode_text(a.text_encoder, a.model_name, prompts)
     engine = InferenceEngine(a.image_encoder)
     bgr = cv2.imread(a.image)
@@ -130,11 +139,7 @@ def main():
             draw.rectangle([20, y, 20 + int(bar_w * prob[i]), y + row - 8], fill=PALETTE[i % len(PALETTE)])
             draw.text((26, y + 1), f"{names[i]} {prob[i] * 100:.0f}%", font=fnt, fill=(255, 255, 255))
     else:
-        boxes = []
-        for line in open(a.det_log, encoding="utf-8", errors="ignore"):
-            m = DET_LINE.match(re.sub(r"\x1b\[[0-9;]*m", "", line).strip())
-            if m and float(m.group(2)) >= a.min_score:
-                boxes.append((m.group(1), float(m.group(2)), *[float(v) for v in m.groups()[2:]]))
+        boxes = [d for d in dets if d[1] >= a.min_score]
         counts = {n: 0 for n in names}
         print("box  det(class score)      ->  label (score)")
         for k, (cls, sc, x1, y1, x2, y2) in enumerate(boxes, 1):
